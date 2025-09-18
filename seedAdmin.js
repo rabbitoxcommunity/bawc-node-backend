@@ -7,8 +7,8 @@ dotenv.config();
 
 // Admin credentials
 const adminCredentials = {
-  username: 'admin',
-  password: 'admin123',
+  username: 'admin@baitalwahda.com',
+  password: 'Bait@2024UAE#',
 };
 
 const seedAdmin = async () => {
