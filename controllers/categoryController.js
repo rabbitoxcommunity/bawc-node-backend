@@ -51,7 +51,7 @@ const createCategory = async (req, res) => {
 // Get Categories
 const getCategories = async (req, res) => {
   try {
-    const categories = await Category.find().sort({ createdAt: 1 }); 
+    const categories = await Category.find().sort({ createdAt: -1 }); 
     res.json({
       success: true,
       message: "Categories fetched successfully",
