@@ -4,11 +4,9 @@ const path = require('path');
 const validate = require('../middleware/validationMiddleware');
 const Joi = require('joi');
 
-const storage = multer.diskStorage({
-  destination: './uploads/',
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
-});
-const upload = multer({ storage });
+const { brandStorage } = require('../config/cloudinary');
+const upload = multer({ brandStorage });
+
 
 const brandSchema = Joi.object({
   name: Joi.string().required(),
@@ -23,27 +21,21 @@ const updateBrandSchema = Joi.object({
 const createBrand = async (req, res) => {
   try {
     let { name } = req.body;
+    if (!name) return res.status(400).json({ success: false, message: "Brand name is required" });
 
-    if (!name) {
-      return res.status(400).json({ success: false, message: "Brand name is required" });
-    }
-
-    // normalize name
     name = name.trim().toLowerCase();
-
-    // check for existing brand (case-insensitive)
     const existing = await Brand.findOne({ name: new RegExp(`^${name}$`, "i") });
-    if (existing) {
-      return res.status(400).json({ success: false, message: "Brand name already exists" });
-    }
+    if (existing) return res.status(400).json({ success: false, message: "Brand already exists" });
 
-    const image = req.file ? `/uploads/${req.file.filename}` : '';
+    // multer + Cloudinary: req.file.path is the Cloudinary secure URL
+    const image = req.file ? req.file.path : '';
+
     const brand = new Brand({ name, image });
     await brand.save();
 
-    res.status(201).json({ success: true, message: "Brand created successfully", data: brand });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message || "Server error" });
+    res.status(201).json({ success: true, message: "Brand created", data: brand });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -100,41 +92,14 @@ const getBrandById = async (req, res) => {
 const updateBrand = async (req, res) => {
   try {
     const { id, name } = req.body;
-
-    if (!id) {
-      return res.status(400).json({ success: false, message: "Brand ID is required" });
-    }
-
-    const image = req.file ? `/uploads/${req.file.filename}` : undefined;
     const updateData = {};
-
-    if (name) {
-      const normalizedName = name.trim().toLowerCase();
-
-      // check if another brand already has this name
-      const existing = await Brand.findOne({
-        _id: { $ne: id }, // exclude current brand
-        name: new RegExp(`^${normalizedName}$`, "i"),
-      });
-
-      if (existing) {
-        return res.status(400).json({ success: false, message: "Brand name already exists" });
-      }
-
-      updateData.name = normalizedName;
-    }
-
-    if (image) updateData.image = image;
-
+    if (name) updateData.name = name.trim().toLowerCase();
+    if (req.file) updateData.image = req.file.path; 
     const brand = await Brand.findByIdAndUpdate(id, updateData, { new: true });
-
-    if (!brand) {
-      return res.status(404).json({ success: false, message: "Brand not found" });
-    }
-
-    res.json({ success: true, message: "Brand updated successfully", data: brand });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message || "Server error" });
+    if (!brand) return res.status(404).json({ success: false, message: 'Brand not found' });
+    res.json({ success: true, message: 'Brand updated', data: brand });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
