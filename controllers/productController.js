@@ -5,14 +5,10 @@ const validate = require('../middleware/validationMiddleware');
 const Joi = require('joi');
 
 /* ---------------- MULTER CONFIG ---------------- */
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "./uploads/"),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
-  },
-});
-const upload = multer({ storage });
+
+
+const { productsStorage } = require('../config/cloudinary');
+const upload = multer({ storage: productsStorage });
 
 /* ---------------- VALIDATION SCHEMAS ---------------- */
 const productSchema = Joi.object({
@@ -31,7 +27,7 @@ const updateProductSchema = Joi.object({
   title: Joi.string().allow('').optional(),
   description: Joi.string().allow('').optional(),
   actualPrice: Joi.number().optional(),
-  discountPrice: Joi.number().optional(),
+  discountPrice: Joi.number().allow(null).optional(),
   isOutOfStock: Joi.boolean().optional(),
   isFeatured: Joi.boolean().optional(),
   category: Joi.string().allow('').optional(),
@@ -53,9 +49,8 @@ const createProduct = async (req, res) => {
       brand,
     } = req.body;
 
-    const images = req.files
-      ? req.files.map((file) => `/uploads/${file.filename}`)
-      : [];
+    // const images = req.files ? req.files.map((file) => `/uploads/${file.filename}`) : [];
+    const images = req.files.map(file => file.path);
 
     const product = new Product({
       images,
@@ -243,7 +238,8 @@ const updateProduct = async (req, res) => {
 
     // Add new uploaded images (if any)
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map((file) => `/uploads/${file.filename}`);
+      // const newImages = req.files.map((file) => `/uploads/${file.filename}`);
+      const newImages = req.files.map(file => file.path);
       updatedImages = [...updatedImages, ...newImages];
     }
 

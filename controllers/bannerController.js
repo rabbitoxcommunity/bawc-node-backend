@@ -4,11 +4,8 @@ const path = require('path');
 const validate = require('../middleware/validationMiddleware');
 const Joi = require('joi');
 
-const storage = multer.diskStorage({
-  destination: './uploads/',
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
-});
-const upload = multer({ storage });
+const { bannerStorage } = require('../config/cloudinary');
+const upload = multer({ storage: bannerStorage });
 
 const bannerSchema = Joi.object({
   subTitle: Joi.string().allow('').optional(),
@@ -31,8 +28,9 @@ const createBanner = async (req, res) => {
     //   return res.status(400).json({ success: false, message: "Main title is required" });
     // }
 
-    const image = req.file ? `/uploads/${req.file.filename}` : '';
+    const image = req.file ? req.file.path : '';
     const banner = new Banner({ subTitle, mainTitle, link, image });
+  
     await banner.save();
 
     res.status(201).json({ success: true, message: "Banner created successfully", data: banner });
@@ -101,7 +99,7 @@ const updateBanner = async (req, res) => {
       return res.status(400).json({ success: false, message: "Banner ID is required" });
     }
 
-    const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+     const image = req.file ? req.file.path : '';
     const updateData = {};
     if (subTitle) updateData.subTitle = subTitle;
     if (mainTitle) updateData.mainTitle = mainTitle;

@@ -4,11 +4,8 @@ const path = require('path');
 const validate = require('../middleware/validationMiddleware');
 const Joi = require('joi');
 
-const storage = multer.diskStorage({
-  destination: './uploads/',
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
-});
-const upload = multer({ storage });
+const { categoryStorage } = require('../config/cloudinary');
+const upload = multer({ storage: categoryStorage });
 
 const categorySchema = Joi.object({
   name: Joi.string().required(),
@@ -37,7 +34,7 @@ const createCategory = async (req, res) => {
       return res.status(400).json({ success: false, message: "Category name already exists" });
     }
 
-    const image = req.file ? `/uploads/${req.file.filename}` : '';
+     const image = req.file ? req.file.path : '';
     const category = new Category({ name, image });
     await category.save();
 
@@ -109,7 +106,7 @@ const updateCategory = async (req, res) => {
       return res.status(400).json({ success: false, message: "Category ID is required" });
     }
 
-    const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const image = req.file ? req.file.path : '';
     const updateData = {};
 
     if (name) {

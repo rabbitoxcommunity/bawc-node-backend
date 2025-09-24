@@ -5,7 +5,7 @@ const validate = require('../middleware/validationMiddleware');
 const Joi = require('joi');
 
 const { brandStorage } = require('../config/cloudinary');
-const upload = multer({ brandStorage });
+const upload = multer({ storage: brandStorage });
 
 
 const brandSchema = Joi.object({
