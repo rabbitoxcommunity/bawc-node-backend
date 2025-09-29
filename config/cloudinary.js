@@ -22,7 +22,7 @@ const bannerStorage = new CloudinaryStorage({
     params: {
     folder: 'banners',    
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
-    transformation: [{ width: 800, height: 800, crop: 'limit' }],
+    // transformation: [{ width: 800, height: 800, crop: 'limit' }],
   },
 });
 
